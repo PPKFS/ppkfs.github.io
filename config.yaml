@@ -1,0 +1,69 @@
+baseURL: https://example.com
+languageCode: en-gb
+defaultContentLanguage: en
+title: Avery's blog of miscellania.
+theme: papercss-hugo-theme
+googleAnalytics: UA-123456789-1
+disqusShortname: yourdiscussshortname
+
+privacy:
+  disqus:
+    disable: true
+
+taxonomies:
+  tag: tags
+
+permalinks:
+  post: /:filename/
+
+imaging:
+  quality: 99
+
+# To disable, set to an extremely large value, such as 999999
+paginate: 5
+
+params:
+  dateFormat: Jan 2, 2006
+  navTitleLink: /
+  description: A blog about not much.
+
+menu:
+  nav:
+    - name: Blog
+      url: /
+      weight: 1
+    - name: Tags
+      url: /tags/
+      weight: 2
+    - name: About
+      url: /about/
+      weight: 3
+    - name: Github
+      url: https://github.com/PPKFS
+      weight: 4
+    - name: Twitter
+      url: https://twitter.com/ppk_fs_
+      weight: 5
+
+sectionPagesMenu: main
+markup:
+  defaultMarkdownHandler: goldmark
+  goldmark:
+    extensions:
+      definitionList: true
+      footnote: true
+      linkify: true
+      strikethrough: true
+      table: true
+      taskList: true
+      typographer: true
+    parser:
+      attribute: true
+      autoHeadingID: true
+    renderer:
+      hardWraps: false
+      unsafe: true
+      xHTML: false
+  tableOfContents:
+    endLevel: 3
+    startLevel: 2
