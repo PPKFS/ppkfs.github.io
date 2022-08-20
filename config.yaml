@@ -2,7 +2,6 @@ baseURL: https://ppkfs.github.io
 languageCode: en-gb
 defaultContentLanguage: en
 title: Avery's blog of miscellania.
-theme: papercss-hugo-theme
 googleAnalytics: G-RHBGNP3WGS
 disqusShortname: yourdiscussshortnames
 
