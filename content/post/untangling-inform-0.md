@@ -1,6 +1,6 @@
 ---
 title: "Untangling Inform7, Part 0 - The Preamble begins here."
-date: 2019-02-22T20:53:58-06:00
+date: 2022-08-20T11:34:00+02:00
 tags: [inform, haskell, interactive-fiction, development, code]
 summary: With the recent open-sourcing of the (fabulous) Inform7 programming language for writing interactive fiction, I’ve fallen back down the rabbit hole of understanding how the pieces fit together...and started writing my own Inform7 compiler. This blogpost series (hopefully) will try to shed some light on how it all works.
 ---
