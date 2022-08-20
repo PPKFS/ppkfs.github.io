@@ -84,7 +84,6 @@ So there are a lot of things this won't be. To name a few:
 
 The functionality is split over a handful of various services that are used repeatedly; for instance one technique the compiler uses extensively is simply running the compiler on additional sentences that it decides it needs - if you say that "in every room there is a candle", every construction of a room will have the line "In <room> is a candle".
 
+Theoretically, it should be easy to swap in certain stages; as long as you generate correct Inter code, you can replace Stages 1-5 with your own construction for example. Maybe that will be what happens with this project? We shall have to see.
 
-## What next?
-
-who knows?
+And finally, I shall be calling this project `uninformed`, because I have very little idea what I'm doing - but the fun is the journey. Or something.
