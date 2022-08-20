@@ -1,0 +1,21 @@
+<footer class="footer">
+  <div class="footer__inner">
+    {{ if $.Site.Copyright }}
+      <div class="copyright copyright--user">
+        <span>{{ $.Site.Copyright | safeHTML }}</span>
+    {{ else }}
+      <div class="copyright">
+        <span>© {{ now.Year }} Powered by <a href="http://gohugo.io">Hugo</a></span>
+    {{ end }}
+        <span>:: Theme based off <a href="https://github.com/zwbetz-gh/papercss-hugo-theme">PaperCSS Hugo Theme</a></span>
+      </div>
+  </div>
+</footer>
+
+<script src="{{ "assets/main.js" | absURL }}"></script>
+<script src="{{ "assets/prism.js" | absURL }}"></script>
+
+{{ if $.Site.Params.showLanguageSelector }}
+  <script src="{{ "assets/languageSelector.js" | absURL }}"></script>
+{{ end }}
+{{ template "_internal/google_analytics.html" . }}
