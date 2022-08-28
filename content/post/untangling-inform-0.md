@@ -4,6 +4,11 @@ date: 2022-08-20T11:34:00+02:00
 tags: [inform, haskell, interactive-fiction, development, code]
 summary: With the recent open-sourcing of the (fabulous) Inform7 programming language for writing interactive fiction, I’ve fallen back down the rabbit hole of understanding how the pieces fit together...and started writing my own Inform7 compiler. This blogpost series (hopefully) will try to shed some light on how it all works.
 ---
+{{< border "dotted" >}}
+## Prerequisites for this post
+
+None! This is mostly scene-setting, though some understanding of interactive fiction, Inform7, or coding in general would be very helpful.
+{{< /border >}}
 
 ## Introduction
 I’ve spent far too long trying, and never getting very far, to write my own interactive fiction library. [Interactive fiction](https://en.wikipedia.org/wiki/Interactive_fiction) is, to put it simply, a broad umbrella covering various text-based games: what most people probably know as “text adventures”. It certainly covers a lot more (gamebooks ala Fighting Fantasy, choose-your-own-adventures, visual novels, the list goes on) than the games of old where you type in things like `GET LAMP`, but that’s not my thing. My interest is just in the internals of these parser-based (because it parses your commands into game actions) IF libraries. Probably the most well-known of the libraries and tools for writing these sorts of games is [*Inform7*, by Graham Nelson](http://inform7.com).
