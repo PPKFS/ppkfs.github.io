@@ -35,6 +35,9 @@ blockquote {
   padding: 1em;
   margin-top: 1em;
 }
+.toc li {
+  line-height: 1.35rem;
+}
 .toc h2 {
   font-size: 1.3em;
 }
