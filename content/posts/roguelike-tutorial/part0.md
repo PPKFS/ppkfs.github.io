@@ -5,11 +5,12 @@ date: "2025-03-30"
 description: |
   The Python+libtcod roguelike tutorial series and all of its spinoffs for other languages and frameworks have been super popular in the roguelike gamedev space for over a decade now. So, this is me attempting to do the same but for Haskell.
 
-summary: "An introduction to the planned blog posts, setting up a project, and getting an `@` moving around."
+summary: "An introduction to the planned blog posts, setting up a project, and getting a window open."
 tags: ["roguelike", "tutorial", "projects", "haskell"]
 categories: ["haskell"]
 series: ["roguelike-tutorial"]
 ShowToc: true
+modified: "2025-04-05"
 TocOpen: true
 social:
   bluesky: "ppkfs@bsky.social"
@@ -211,10 +212,9 @@ runLoop = do
   terminalRefresh
   -- event handling
   shouldContinue <- handleEvents Blocking $ \case
-    TkResized -> return True
     TkClose -> return False
     TkEscape -> return False
-    _ -> return False
+    _ -> return True
   when (and shouldContinue) runLoop
 ```
 
