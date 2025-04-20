@@ -14,7 +14,7 @@ buildExpired: false
 enableEmoji: true
 pygmentsUseClasses: true
 mainsections: ["posts", "projects", "about"]
-
+googleAnalytics: "G-RHBGNP3WGS"
 minify:
   disableXML: true
   # minifyOutput: true
