@@ -12,6 +12,7 @@ series: ["roguelike-tutorial"]
 ShowToc: true
 modified: "2025-04-05"
 TocOpen: true
+weight: 2
 social:
   bluesky: "ppkfs@bsky.social"
 ---
@@ -20,7 +21,7 @@ social:
 
 ## Motivation
 
-Welcome! This is the first part of what I hope will be a complete series on how to make a roguelike game in Haskell. The [original roguelike tutorial](https://www.roguebasin.com/index.php?title=Complete_Roguelike_Tutorial,_using_python%2Blibtcod) has been endlessly used (I remember going through it all with Python in...god knows when. Probably early 2010) and loved and adapted to many other languages and frameworks for Rust with `rltk`, Javascript with `rot.js`, C# with `RogueSharp`; for Godot, for Unity, and a ton more I'm missing. "r/roguelikedev does the roguelike tutorial" has
+Welcome! This is the zeroth part (the prologue, as it were) of what I hope will be a complete series on how to make a roguelike game in Haskell. The [original roguelike tutorial](https://www.roguebasin.com/index.php?title=Complete_Roguelike_Tutorial,_using_python%2Blibtcod) has been endlessly used (I remember going through it all with Python in...god knows when. Probably early 2010) and loved and adapted to many other languages and frameworks for Rust with `rltk`, Javascript with `rot.js`, C# with `RogueSharp`; for Godot, for Unity, and a ton more I'm missing. "r/roguelikedev does the roguelike tutorial" has
 become a yearly event. There's a great roguelike fan Discord server with an active dev chat. Making roguelikes is great fun, and it's easier than people think.
 
 There's a kind of mental jump going between "I can solve all these problems in a given language" and "I can write an application (possibly a game)". Maybe the reason these tutorial series are so popular, despite being very clear that nothing they are introducing to the reader is new to them, is because they provide a welcoming helping hand. They take you from being able to write a bunch of classes or functions to an actual *game* with a randomly generated dungeon with *monsters* and *combat* and *items* and all that cool stuff.
@@ -37,29 +38,20 @@ If the following list doesn't make you run away screaming, then fingers are cros
   - `map`/`fmap`/`mapM`, `filter`, `fold`;
 - Monads
   - do-notation;
-  - State, Reader, Writer, IO;
+  - Basic monads - at the very least `State` and `IO`;
   - Simple monad stacks, in whatever form (`StateT s IO a` or `MonadState s m => m a` or `State s :> es => Eff es a`) - or at least the concept of putting two monads together;
-- Modules;
+- modules;
 - `cabal` - adding build-depends, modules, building and running projects
 
-It'd be *very useful* to know about:
+It'd be *very useful* to know about, but these will be covered in a way that doesn't require prior knowledge:
 
 - Language extensions (e.g. `OverloadedLabels`, `OverloadedStrings`, `NoImplicitPrelude`, `TypeApplications`, etc)
 - Basic roguelike concepts like generating tile-based dungeons and an obsession of rendering things in ASCII characters, but that's why you're here - right?
 
-And finally these things **won't explicitly be part of the tutorial (at least to start with)** but are really useful to know about for when you want to go further; I use them *extensively* in my own projects and the libraries do have full support for them:
-
-- Lenses/Optics
-  - Just acknowledging their existence as nicer ways to get, set, and modify nested record fields (*especially* in combination with state monads or stateful effects);
-  - `^./view`, `.~/set`, `%~/over`
-  - the state monad equivalent optics - `use`, `~=`, and `%=`
-  - Using overloaded labels to avoid the pain of duplicate record field names or having `typenameFoo` everywhere;
-- Effect Systems - specifically `effectful`.
-
 ## Planned tutorial structure
 
-- Part 0 (this one) Introduction, setting up the project, opening a window
-- Part 1: Drawing a @ and moving it around
+- [Part 0 (this one): Introduction, setting up the project, opening a window](https://ppkfs.github.io/posts/roguelike-tutorial/part0/)
+- [Part 1: Drawing a @ and moving it around](https://ppkfs.github.io/posts/roguelike-tutorial/part1/)
 - Part 2: Generating a couple of maps
 - Part 3: Field of view
 - Part 4: Monsters, AI
@@ -68,11 +60,13 @@ And finally these things **won't explicitly be part of the tutorial (at least to
 - Part 7: Items and inventory
 - ???
 
-## Example screenshots
+## Some style notes
 
-I'll update this as I go.
+My primary objective for this tutorial is to write *easily understandable* Haskell, not necessarily the most performant or the way I would do it personally.
 
-![](screenshot1.png)
+> [!EXPERIMENT]
+> I'll use Experiment bubbles to briefly describe possible alternative ways to implement something in a more complex way. These are completely optional!
+> They'll often have a convenient link to an expanded discussion at the bottom of the page, like this: [Other useful tools, libraries, and techniques for Haskell gamedev.](#other-tools-libraries-and-techniques)
 
 
 # Project structure setup
@@ -86,6 +80,7 @@ First, we need to download [bearlibterminal](https://github.com/cfyzium/bearlibt
 ```bash
 
 git clone https://github.com/cfyzium/bearlibterminal.git
+mkdir bearlibterminal/Build
 cd bearlibterminal/Build
 cmake ../
 make all
@@ -106,7 +101,12 @@ cd hs-rogue
 cabal init
 ```
 
-This will start the interactive wizard for setting up a new cabal project. The options of importance:
+This will start the interactive wizard for setting up a new cabal project.
+
+> [!WARNING]
+> If you don't get an interactive command line prompt, you're probably using an old version of `cabal`. It's very useful to have at least version 3.4 for `GHC2021`. If not, there will be a full cabal file available at the end of the post.
+
+The options of importance:
 
 - we want just an executable project. In the future we might want to extract some things into a library if we wanted to build off our framework, but for now we just want to make an app.
 - we want **cabal version 3.4 minimum**, because `default-language: GHC2021` saves a lot of time with writing out language extensions!
@@ -114,12 +114,15 @@ This will start the interactive wizard for setting up a new cabal project. The o
 
 The reason I suggest `GHC2021` is because of the following language extensions - there's probably more that are enabled and used, but these are the major ones:
 
-- `DeriveFunctor`, `DeriveGeneric` - Being able to derive functor instances for things that look like wrappers around an `a` with a bunch of additional data is super handy to have. Deriving Generic where possible is great primarily for the 'free' `LabelOptic` instances it gives you when using `optics` (which we are not in this tutorial) but also for making it simple to derive `FromJSON/ToJSON` when it comes to saving and loading our game.
 - `LambdaCase` - Saves an awful lot of time to just write `\case` rather than `\x -> case x of`!
 - `TupleSections` - Another quick timesaver - `( , a)` rather than `\x -> (x, a)`.
 - `DisambiguateRecordFields` - I'm not a fan of prefacing record field names with `typename`, so this saves the headache of the compiler complaining that it cannot identify which `width` is meant in the record update `f { width = (width f) + 1 }`.
+- `DeriveFunctor` - Being able to derive functor instances for things that look like wrappers around an `a` with a bunch of additional data is super handy to have.
 
-This gives us `hs-rogue.cabal` pre-populated. Currently (as of April 2024), one of the libraries we need - `roguefunctor` - is not on Hackage, so cabal cannot automatically download it. We need a `cabal.project` file that specifies where the repositories for this library can be found as well as the packages in our project. We only have one package, but otherwise `cabal run` will complain that the project file lists no packages to run. Create `cabal.project` in the root directory of the project and add the following:
+> [!EXPERIMENT]
+> `DeriveGeneric` - Deriving Generic where possible is great primarily for the 'free' `LabelOptic` instances it gives you when using `optics` (which we are not in this tutorial) but also for making it simple to derive `FromJSON/ToJSON` when it comes to saving and loading our game.
+
+This gives us `hs-rogue.cabal` pre-populated. Currently (as of April 2025), one of the libraries we need - `roguefunctor` - is not on Hackage, so cabal cannot automatically download it. We need a `cabal.project` file that specifies where the repositories for this library can be found as well as the packages in our project. We only have one package, but otherwise `cabal run` will complain that the project file lists no packages to run. Create `cabal.project` in the root directory of the project and add the following:
 
 ```cabal
 source-repository-package
@@ -165,6 +168,12 @@ From the top:
 
 Now if you run `cabal build`, it should download and build the two libraries. You'll know your setup for installing `bearlibterminal` was correct if it successfully builds, as otherwise it will give errors about missing C libraries.
 
+> [!WARNING]
+> If you get an error at this stage about cabal being unable to resolve conflicts, it could be one of two things: 1) you've not run `cabal update`, implied by messages like "could not find package 'random'" or 2) your currently installed GHC version is too low. Whilst I am writing this using 9.8, it should work on 9.4 upwards.
+
+> [!WARNING]
+> If you cannot *build* the project because of missing libraries, make sure you are supplying `--extra-lib-dirs` with wherever your bearlibterminal library is!
+
 ### Default extensions
 Finally we can add a couple of default extensions. `GHC2021` automatically contains most of the "key" extensions for writing comfy modern Haskell, but there's at least two more I suggest:
 
@@ -175,10 +184,13 @@ Finally we can add a couple of default extensions. `GHC2021` automatically conta
     default-language: GHC2021 -- if it's not already added
 ```
 
-- `NoImplicitPrelude` removes the implicit `import Prelude` from every module, thus allowing you to use your own Prelude. This works better than cabal mixins, which aren't great when it comes to integrating with HLS. In this tutorial, we'll write our own `HsRogue.Prelude` - a very thin wrapper around `Prelude` but with some extra re-exports that are still quite strangely not exported by the regular one - `Text`, `forM_`, `(&)`, `void`, and so on - as well as some imports we want to use everywhere in our project, like `Rogue.Geometry.V2`. In `roguefunctor` there is also a custom prelude - `Rogue.Prelude` - that is a thin wrapper around [relude](https://hackage.haskell.org/package/relude). Whilst I do like to use `relude` myself - `Text` over `String` by default, no partial functions, polymorphic `show`, and many other nice-to-haves - `Rogue.Prelude` is geared towards using `effectful` and `optics` rather than `mtl`.
+- `NoImplicitPrelude` removes the implicit `import Prelude` from every module, thus allowing you to use your own Prelude. This works better than cabal mixins, which aren't great when it comes to integrating with HLS. In this tutorial, we'll write our own `HsRogue.Prelude` - a very thin wrapper around `Prelude` but with some extra re-exports that are still quite strangely not exported by the regular one - `Text`, `forM_`, `(&)`, `void`, and so on - as well as some imports we want to use everywhere in our project, like `Rogue.Geometry.V2`.
 - `OverloadedStrings` allows string literals to be interpreted as any instance of `IsString` rather than just as `String`. This is because we want to use `Text` over `String` for efficiency, as you should do in Haskell.
 
 I also typically use `TemplateHaskell` and `RecordWildCards` on a per-module basis.
+
+> [!EXPERIMENT]
+> In `roguefunctor` there is also a custom prelude - `Rogue.Prelude` - that is a thin wrapper around [relude](https://hackage.haskell.org/package/relude). Whilst I do like to use `relude` myself - `Text` over `String` by default, no partial functions, polymorphic `show`, and many other nice-to-haves - `Rogue.Prelude` is geared towards using `effectful` and `optics` rather than `mtl`.
 
 # Opening a window
 
@@ -189,12 +201,16 @@ module Main where
 
 import Prelude -- we'll make our own prelude in part 1
 
-import BearLibTerminal
+import BearLibTerminal ( terminalRefresh )
+-- note that pattern synonyms - such as TkResized, TkClose, and TkEscape -
+-- have a different import syntax.
+-- Keycodes are exported from the main BearLibTerminal module as well!
+import BearLibTerminal.Keycodes
 import Control.Monad (when)
-import Rogue.Config
-import Rogue.Events
-import Rogue.Geometry.V2
-import Rogue.Window
+import Rogue.Config ( WindowOptions(..), defaultWindowOptions )
+import Rogue.Events ( BlockingMode(..), handleEvents )
+import Rogue.Geometry.V2 ( V2(..) )
+import Rogue.Window ( withWindow )
 
 screenSize :: V2
 screenSize = V2 100 50
@@ -212,26 +228,83 @@ runLoop = do
   terminalRefresh
   -- event handling
   shouldContinue <- handleEvents Blocking $ \case
+    TkResized -> return True
     TkClose -> return False
     TkEscape -> return False
     _ -> return True
   when (and shouldContinue) runLoop
 ```
 
+> [!NOTE]
+> I'll be mostly using explicit import lists for external libraries to make it clearer where everything is coming from. Whilst it is a good practice to have, it's not something I normally do!
+
 You can run your program with `cabal run hs-rogue`. If everything goes to plan, you should now have a black window open!
 
-## Troubleshooting
-
-If you cannot *build* the project because of missing libraries, make sure you are supplying `--extra-lib-dirs`. If you can build but not *run* the project because of missing libraries, make sure you've copied `libbearterminal.so/dylib/dll` to a location on your PATH or `export LD_LIBRARY_PATH/DYLIB_LIBRARY_PATH`.
+> [!WARNING]
+> If you can build but not *run* the project because of missing libraries, make sure you've copied `libbearterminal.so/dylib/dll` to a location on your PATH or `export LD_LIBRARY_PATH/DYLIB_LIBRARY_PATH`.
 
 Maybe there will be more things, which can be added later.
 
 # Wrapping up
 
-Well, that's it for part 0. Not exactly much coding, but we can now hit the ground running for Part 1!
+Well, that's it for part 0. Not exactly much coding, but we can now hit the ground running for [Part 1](https://ppkfs.github.io/posts/roguelike-tutorial/part1/)!
 
 The code - well, a blank project structure - is available at the accompaying github repo [here](https://github.com/PPKFS/roguelike-tutorial-parts/tree/part-0).
 
 Hopefully this was understandable - any feedback is greatly appreciated. You can find me on the various functional programming/roguelike Discords as ppkfs and on Bluesky as @ppkfs.bsky.social.
 
 Hope to see you for Part 1 soon!
+
+# Postscript
+
+## Full cabal file
+
+```cabal
+cabal-version: 3.6
+name:          hs-rogue
+version:       0.0.1
+synopsis:      Roguelike tutorial in Haskell.
+description:   Part 0 of the roguelike tutorial in Haskell.
+homepage:
+  https://github.com/PPKFS/roguelike-tutorial-parts/tree/part-0
+
+bug-reports:   https://github.com/PPKFS/roguelike-tutorial-parts/issues
+license:       MIT
+author:        Avery
+maintainer:    Avery <ppkfs@outlook.com>
+copyright:     2024-2025 Avery
+category:      Game
+build-type:    Simple
+tested-with:   GHC ==9.6.7 || ==9.8.2
+
+executable hs-rogue
+  main-is:            Main.hs
+  default-extensions:
+    LambdaCase
+    NoImplicitPrelude
+    OverloadedStrings
+
+  build-depends:
+    , base             ^>=4.19.1.0
+    , bearlibterminal
+    , containers
+    , random
+    , roguefunctor
+
+  hs-source-dirs:     app
+  default-language:   GHC2021
+  ghc-options:        -Wall
+```
+
+## Other tools, libraries, and techniques
+
+These things **won't explicitly be part of the tutorial (at least to start with)** but are really useful to know about for when you want to go further. I use them *extensively* in my own projects and the libraries do have full support for them!
+
+I probably will expand this section in the future.
+
+- Lenses/Optics
+  - Just acknowledging their existence as nicer ways to get, set, and modify nested record fields (*especially* in combination with state monads or stateful effects);
+  - `^./view`, `.~/set`, `%~/over`
+  - the state monad equivalent optics - `use`, `~=`, and `%=`
+  - Using overloaded labels to avoid the pain of duplicate record field names or having `typenameFoo` everywhere;
+- Effect Systems - such as `effectful`. We will likely introduce `mtl` in a later part!

@@ -10,6 +10,7 @@ series: ["roguelike-tutorial"]
 ShowToc: true
 TocOpen: true
 draft: false
+weight: 1
 social:
   bluesky: "ppkfs@bsky.social"
 ---
@@ -29,14 +30,18 @@ In the first part, we opened a (blank) window just to verify that we had setup t
 ```haskell
 module Main where
 
-import Prelude
+import Prelude -- we'll make our own prelude in part 1
 
-import BearLibTerminal
+import BearLibTerminal ( terminalRefresh )
+-- note that pattern synonyms - such as TkResized, TkClose, and TkEscape -
+-- have a different import syntax.
+-- Keycodes are exported from the main BearLibTerminal module as well!
+import BearLibTerminal.Keycodes
 import Control.Monad (when)
-import Rogue.Config
-import Rogue.Events
-import Rogue.Geometry.V2
-import Rogue.Window
+import Rogue.Config ( WindowOptions(..), defaultWindowOptions )
+import Rogue.Events ( BlockingMode(..), handleEvents )
+import Rogue.Geometry.V2 ( V2(..) )
+import Rogue.Window ( withWindow )
 
 screenSize :: V2
 screenSize = V2 100 50
@@ -45,6 +50,7 @@ screenSize = V2 100 50
 As we have `NoImplicitPrelude` enabled (very shortly for an actual reason) we need to explicitly import `Prelude` here. We also do need to import `Control.Monad` for `when`, as well as `BearLibTerminal` (for keycode events and terminal functions) and four modules from `roguefunctor` for basic window management - `Rogue.Config` gives us `defaultWindowOptions`, `Rogue.Events` gives us an event loop, `Rogue.Geometry.V2` gives us a nice 2D vector type, and `Rogue.Window` has functionality for handling initialising and closing a window.
 
 For now, we just want to hard-code the screen size (and ignore resizing or having it in a configuration file). We also want to, at least initially, tie the map size to the screen in some form - so we define it at the top level so it can be passed around later to our map generation functions.
+
 ```haskell
 main :: IO ()
 main =
@@ -77,6 +83,7 @@ runLoop = do
   terminalRefresh
   -- event handling
   shouldContinue <- handleEvents Blocking $ \case
+    TkResized -> return True
     TkClose -> return False
     TkEscape -> return False
     _ -> return True

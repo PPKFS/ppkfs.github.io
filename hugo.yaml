@@ -4,7 +4,7 @@ baseURL: "https://ppkfs.github.io/"
 title: PPK's Blog
 copyright: "© [Avery](https://github.com/ppkfs)"
 paginate.papersize: 5
-theme: [PaperMod]
+theme: [PaperMod, "hugo-admonitions"]
 
 enableInlineShortcodes: true
 enableRobotsTXT: true
@@ -68,7 +68,6 @@ params:
   ShowPageNums: true
   ShowToc: true
   # comments: false
-
   profileMode:
     enabled: false
     title: Blog?
@@ -168,3 +167,5 @@ services:
     disableInlineCSS: true
   twitter:
     disableInlineCSS: true
+
+
