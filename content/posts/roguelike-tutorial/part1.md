@@ -30,14 +30,14 @@ In the first part, we opened a (blank) window just to verify that we had setup t
 ```haskell
 module Main where
 
-import Prelude -- we'll make our own prelude in part 1
+import Prelude
 
 import BearLibTerminal ( terminalRefresh )
--- note that pattern synonyms - such as TkResized, TkClose, and TkEscape -
--- have a different import syntax.
--- Keycodes are exported from the main BearLibTerminal module as well!
 import BearLibTerminal.Keycodes
-import Control.Monad (when)
+
+import Control.Monad ( when )
+import Control.Monad.IO.Class ( MonadIO(..) )
+
 import Rogue.Config ( WindowOptions(..), defaultWindowOptions )
 import Rogue.Events ( BlockingMode(..), handleEvents )
 import Rogue.Geometry.V2 ( V2(..) )
@@ -47,21 +47,34 @@ screenSize :: V2
 screenSize = V2 100 50
 ```
 
-As we have `NoImplicitPrelude` enabled (very shortly for an actual reason) we need to explicitly import `Prelude` here. We also do need to import `Control.Monad` for `when`, as well as `BearLibTerminal` (for keycode events and terminal functions) and four modules from `roguefunctor` for basic window management - `Rogue.Config` gives us `defaultWindowOptions`, `Rogue.Events` gives us an event loop, `Rogue.Geometry.V2` gives us a nice 2D vector type, and `Rogue.Window` has functionality for handling initialising and closing a window.
+As we have `NoImplicitPrelude` enabled (very shortly for an actual reason) we need to explicitly import `Prelude` here. We have a small smattering of other imports for getting a basic window up:
+- `Control.Monad` for `when` (soon we won't need to!)
+- `BearLibTerminal` (for keycode/other events and terminal functions)
+- `Rogue.Config` gives us `defaultWindowOptions`
+- `Rogue.Events` gives us an event handling loop
+- `Rogue.Geometry.V2` gives us a nice 2D vector type (this one is also soon to disappear)
+- `Rogue.Window` has functionality for handling initialising and closing a window.
 
 For now, we just want to hard-code the screen size (and ignore resizing or having it in a configuration file). We also want to, at least initially, tie the map size to the screen in some form - so we define it at the top level so it can be passed around later to our map generation functions.
 
 ```haskell
+
 main :: IO ()
 main =
   withWindow
-  defaultWindowOptions { size = Just screenSize }
+  defaultWindowOptions { size = Just screenSize, title = Just "HsRogue - Part 0" }
   (return ()) -- no init logic
-  (const runLoop)
+  (const $ liftIO runLoop)
   (return ()) -- no shutdown logic
 ```
 
-Our `main` function delegates everything to `withWindow`, a convenient wrapper around `bracket`. For those who haven't seen `bracket/bracket_` before, it allows us to wrap some `IO a` action with an initialisation or acquisition logic and a finalising or releasing logic. Even if the internal computation hits a runtime exception or exits unexpectedly, the resource will be safely released. `withWindow` isn't *exactly* the same as `bracket` - `bracket`'s type signature looks like `IO a -> (a -> IO b) -> (a -> IO c) -> IO c`, where the order of parameters goes acquire-release-action and the resource acquired is passed as a parameter to both the main action and releasing action. In contrast, `withWindow` is:
+Our `main` function delegates everything to `withWindow`, a convenient wrapper around `bracket`.
+
+> [!INFO]
+> For those who haven't seen `bracket/bracket_` before, it allows us to wrap some `IO a` action with an initialisation or acquisition logic and a finalising or releasing logic. Even if the internal computation hits a runtime exception or exits unexpectedly, the resource will be safely released. From the [Haskell wiki](https://wiki.haskell.org/Bracket_pattern), 'In general, throughout the libraries many functions having names beginning with `with` are defined to manage various resources in this fashion. One passes in a function of the allocated resource that says what to do, and the with-function handles both the allocation and deallocation.'
+
+
+`withWindow` isn't *exactly* the same as `bracket` - `bracket`'s type signature looks like `IO a -> (a -> IO b) -> (a -> IO c) -> IO c`, where the order of parameters goes acquire-release-action and the resource acquired is passed as a parameter to both the main action and releasing action. In contrast, `withWindow` is:
 
 ```haskell
 withWindow ::
@@ -75,7 +88,10 @@ withWindow ::
 
 Note that the order is shifted: because we typically want to run the middle action as a loop (i.e. we need it to recurse) rather than as a one-off, we don't need the benefits of writing `bracket init close $ \resource -> do ...`. Writing it in this order feels more sensible.
 
-As we don't need to do any resource acquisition or releasing - `withWindow` handles the window for us, obviously - we do nothing with `return ()` both times.
+As we don't need to do any resource acquisition or releasing - `withWindow` handles the window for us, obviously - we do nothing with `return ()` both times. For us, it's less about the guarantee that we free the resource (this is much more critical in e.g. IO-sensitive operations) but it does make it a lot easier to abstract out "doing window setup" from "actual game stuff".
+
+> [!INFO]
+> `bearlibterminal` as a library is based around strings. Window configuration options, config file loading, font alignment and glyph mapping - it almost all can be done with strings passed to `terminalSet`. You can do this too in Haskell land if you want! However for the most part, this is obviously Not Good in terms of type safety! `roguefunctor` instead allows you to set configuration options with normal Haskell records and deals with the stringification. This will come up more in Part 2 when we want to change the font, but it's all in `Rogue.Config` and the `BearLibConfigString` class if you're interested.
 
 ```haskell
 runLoop :: IO ()
@@ -83,14 +99,13 @@ runLoop = do
   terminalRefresh
   -- event handling
   shouldContinue <- handleEvents Blocking $ \case
-    TkResized -> return True
     TkClose -> return False
     TkEscape -> return False
     _ -> return True
   when (and shouldContinue) runLoop
 ```
 
-The first thing we need to do in our game loop is to refresh the screen. This is required by `BearLibTerminal` to show the window after it's been initialised, and `withWindow` doesn't do this step for us (in case e.g. you want to render the scene before showing the window). For event handling we use `handleEvents` to iterate over all the input events that have been registered since the last time it was checked. Usually this will just be one event, but it can be multiple! We can either do this with `Blocking` enabled (where it will wait if no events are pending) or `NonBlocking` (where, if there are no events, it'll return `[]` and continue execution). For now, because we want to just wait for a keypress we use the blocking mode. If we get a window close event (the user pressed the X) or an `Escape` keypress, we return a `False` and if we have any other event we return `True`. As this is a *list* of booleans (if we get multiple events at the same time), we want to loop - via recursion - if **none** of the booleans are `False` (that we did not get a close or escape event)...and thank you DeMorgan for letting us flip the conditions to get that we should loop if **all** the booleans are `True`! If this is the case we go back into the loop, and if not then the function ends.
+The first thing we need to do in our game loop is to refresh the screen. This is required by `BearLibTerminal` to show the window after it's been initialised, and `withWindow` doesn't do this step for us (in case e.g. you want to render the scene before showing the window). For event handling we use `handleEvents` to iterate over all the input events that have been registered since the last time it was checked. Usually this will just be one event, but it can be multiple! We can either do this with `Blocking` enabled (where it will wait if no events are pending) or `NonBlocking` (where, if there are no events, it'll return `[]` and continue execution). For now, because we want to just wait for a keypress we use the blocking mode. If we get a window close event (the user pressed the X) or an `Escape` keypress, we return a `False` and if we have any other event we return `True`. As this is a *list* of booleans (if we get multiple events at the same time), we want to loop - via recursion - if **none** of the booleans are `False` (that we did not get a close or escape event). When you think about it, if none of them are False, then all of them are True. This means we simply loop if **all** the booleans are `True`! If this is the case we go back into the loop, and if not then the function ends.
 
 So hopefully this was all fine to follow! Once again none of the things in `roguefunctor` are necessary, but they sure save time. One more small thing before we start actually drawing to the screen to save us some time later..
 
@@ -112,12 +127,16 @@ module HsRogue.Prelude
   ) where
 
 import Prelude
-import Data.Maybe
+
 import Control.Monad
 import Control.Monad.State.Strict
-import GHC.Generics
-import Rogue.Geometry.V2
+
+import Data.Maybe
 import Data.Text (Text)
+
+import GHC.Generics
+
+import Rogue.Geometry.V2
 ```
 
 Here, we just re-export the entire modules we will be using the most:
@@ -128,12 +147,24 @@ Here, we just re-export the entire modules we will be using the most:
 - `Rogue.Geometry.V2` is just ubiquitous.
 - Finally, we only want to export the `Text` type from `Data.Text`. If we want the rest of the functions we'll explicitly import it qualified to avoid clashing with `Text.map` and `Text.fold` and similar.
 
-Another option would be to use the bundled `Rogue.Prelude` module, which is based off `relude`. But, that's somewhat out of scope for here.
+> [!WARNING]
+> Make sure to add `HsRogue.Prelude` to your `other-modules` in your `hs-rogue.cabal` file! I won't be mentioning it consistently but when you make a new module, remember to add it to the cabal file to avoid linker issues later on.
+
+> [!EXPERIMENT]
+> Another option would be to use the bundled `Rogue.Prelude` module, which is based off `relude`. It does basically the same thing we've done, except it includes things like `Bifunctor`.
 
 Let's amend our current `Main` module to use the new prelude:
 
 ```haskell
 import HsRogue.Prelude
+
+import BearLibTerminal ( terminalClear, terminalRefresh )
+import BearLibTerminal.Keycodes
+
+import Rogue.Config ( WindowOptions(..), defaultWindowOptions )
+import Rogue.Events ( BlockingMode(..), handleEvents_ )
+import Rogue.Rendering.Print  ( printText_ )
+import Rogue.Window ( withWindow )
 ```
 
 Now with a more convenient prelude out of the way, let's **finally** start on drawing to the screen.
@@ -144,13 +175,11 @@ We'll start by upgrading our monad stack. A game is an inherently stateful progr
 
 ```haskell
 
--- define the starting location for the '@' we draw
 initialPlayerPosition :: V2
 initialPlayerPosition = V2 20 20
 
--- later this will include things like all the enemies and items in the world and the map
--- but for now we only need to store the player's position and whether we should quit the game
--- on the next loop
+type Game m a = StateT WorldState m a
+
 data WorldState = WorldState
   { playerPosition :: V2
   , pendingQuit :: Bool
@@ -158,14 +187,6 @@ data WorldState = WorldState
 ```
 
 And because we're going to be doing everything within a state monad transformer (for the game state) over IO (for drawing and input handling), we make a convenient type synonym:
-
-```haskell
-
--- our Game monad will be a state monad with the current state of the world as we play
--- on top of the IO monad to handle reading the player's inputs and drawing things to the screen
-type Game a = StateT WorldState IO a
-
-```
 
 Why are we using a concrete monad stack rather than `mtl`-style constraints? Purely for simplicity's sake. You could - and I would even possibly go as far as *should* - write your monadic computations like this:
 
@@ -190,36 +211,36 @@ We then want to move our window creation and game loop into this new `Game` mona
 
 ```haskell
 main :: IO ()
--- evalState is the "run this computation and return the *value* it computes" state evaluator.
-main = flip evalStateT (WorldState initialPlayerPosition False) $
+main =
   withWindow
-    defaultWindowOptions { size = Just screenSize }
-    (return ())
-    (const runLoop)
-    (return ())
+    defaultWindowOptions { size = Just screenSize, title = Just "HsRogue - Part 1" }
+    (return ()) -- no init logic
+    (const $ void $ evalStateT runLoop (WorldState initialPlayerPosition False))
+    (return ()) -- no shutdown logic
 
-runLoop :: Game ()
+pendQuit :: Monad m => Game m ()
+pendQuit = modify (\worldState -> worldState { pendingQuit = True})
+
+runLoop :: MonadIO m => Game m ()
 runLoop = do
+  terminalClear
+  playerPos <- gets playerPosition
+  printText_ playerPos "@"
   terminalRefresh
-  void $ handleEvents Blocking $ \case
-    TkClose -> modify (\worldState -> worldState { pendingQuit = True})
-    TkEscape -> modify (\worldState -> worldState { pendingQuit = True})
-    _ -> return True
-  -- this is the equivalent of doing
-  -- worldState <- get
-  -- let shouldContinue = not (pendingQuit worldState)
-  shouldContinue <- not <$> gets pendingQuit
-  when shouldContinue runLoop
+  handleEvents_ Blocking $ \case
+    TkClose -> pendQuit
+    TkEscape -> pendQuit
+    _ -> return ()
+  shouldQuit <- gets pendingQuit
+  unless shouldQuit runLoop
 ```
 
 We move from a local binding of the pending quit (local to the `runLoop` function) to a stateful one, and adjust our looping condition accordingly. Finally, at long last, we can adjust `terminalRefresh` to additionally clear the screen and obtain the current player position to draw it to the screen.
 
 ```haskell
-runLoop = do
   terminalClear
-  -- we query the game state for the current position of the player
   playerPos <- gets playerPosition
-  void $ withV2 playerPos terminalPrint "@"
+  printText_ playerPos "@"
   terminalRefresh
 ```
 
