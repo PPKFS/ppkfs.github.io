@@ -2,7 +2,7 @@
 author: ["Avery"]
 title: "Haskell Roguelike Tutorial Part 1 - Drawing & Moving"
 date: "2025-04-18"
-modified: "2025-06-19"
+modified: "2025-07-08"
 description: "This is the first 'proper' tutorial post; there's a walkthrough of the window opening example before jumping in with moving an @ around the screen."
 summary: "Walking through the window opening code and drawing and moving a character."
 tags: ["roguelike", "tutorial", "projects", "haskell"]
