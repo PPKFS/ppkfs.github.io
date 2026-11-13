@@ -45,11 +45,12 @@ So then I fired up the site to do one last round of tweaks and bug fixes. I tall
 - ask me for input if there's anything that is a design decision,
 - not actually implement things.
 
-You're absolutely right—I should do all those things. Let me investigate. I went off and tidied the kitchen for 10 minutes, which is really quite a nice thing to do now that xkcd's "Code's Compiling!" comic is sadly no longer relevant. I came back and it was done. Alright, start on the list. No, I don't really care what you do first. Just do stuff. See if you can spin up some agents. Off I go, back to tidying the kitchen.
+You're absolutely right—I should do all those things. Let me investigate. I went off and tidied the kitchen for 10 minutes, which is really quite a nice thing to do now that xkcd's "Code's Compiling!" comic is sadly no longer relevant. I came back and it was done with my housekeeping: Now I had a 750+ line TODO file with checkboxes, every line I had written of the form "the button looks weird" turned into a mini product pitch about how the button's aesthetics were unsatisfactory and demanded a new change. Alright, I'll skim the list. Yup, it has covered everything. Now go start on implementing the list. No, I don't really care what you do first. Just do stuff. See if you can spin up some agents. Off I go, back to tidying the kitchen.
 
 **But...is this it? Is this really what I want to be doing? What purpose is any of this serving?**
 
-I sat down and fired up some of the code. Oh god. What the hell is *any of this*.
+
+About 10 minutes later, I came back and it had fixed about 4 or 5 of them. I sat down and fired up some of the code. Oh god. What the hell is *any of this*.
 
 - I don't know frontend development, so I expect that making html elements and layouts is going to be verbose...but I don't think "literally zero code or element reuse" is the answer there.
 - What does any of this even *do*?
