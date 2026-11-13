@@ -1,4 +1,8 @@
-# I tried vibe coding for 3 weeks and it kind of sucked: On vibe coding, slop, craft, and enjoyment
+# I tried vibe coding for 3 weeks and it kind of sucked: On vibe coding, slop, craft, and enjoyment.
+
+So yeah. I ended up vibing up a project where I only cared about the end result and it made me realised how much it sucks. Then I spent all evening writing down a huge ramble.
+
+---
 
 I was going to write a post about my experience trying out vibe coding and how it kind of sucked, the result kind of sucked, and a play-by-play of how everything slowly got sucked into the slop mines. On the bike ride home, whilst my mind raced over all the things I could say, I realised: "hang on, I'm just making human slop about how slop kind of sucks." and the first thing I did when I got home was delete it all. Goodbye, 2500 words. I'll elaborate a little in the Slop section, but first I want to touch the big stuff: vibe coding (or LLM coding, or AI coding, or whatever you want to call it).
 
