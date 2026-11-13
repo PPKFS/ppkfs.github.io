@@ -30,7 +30,9 @@ I was not going full hands-off vibe. I was browsing over the code every few prom
 
 At the end of the 3 weeks or so, I was quite pleased with it. It looked quite pretty - apparently all you need to do is spend 10 minutes prompting "please make it look less like LLM slop" and it does that just fine, which says *a lot*. I had spent about $25 and a solid $10 of that was just from using the LLM as a fuzzy web scraper to seed the catalog of episode data. No, I don't really want to be trying to find information on what the contestants made for the showstopper challenge in the 5th episode of the 4th series of the Czech spinoff of GBBO and then spend 10 minutes turning it into JSON.
 
-**Insert some screenshots of the site here**
+![](/images/01-landing.png)
+![](/images/04-episode.png)
+![](/images/14-bakes.png)
 
 ### It's done...or is it?
 
@@ -101,7 +103,7 @@ So okay, setting the scene. I had some thoughts shortly after it clicked into pl
 
 ### Producing for the sake of producing
 
-I really like this article about the rise of "Whatever". The fact that stuff gets made because Something is better than Nothing. That seems to be the purpose and the reason for vibe coding. I have not found a better example that completely refutes the idea that vibe coding is "democratizing software" or whatever else people want to call it. Can anyone, without any particular set of skills, now produce? Yes! Why are they producing? Almost always: Because they can!
+I really like [this article about the rise of "Whatever"](https://eev.ee/blog/2025/07/03/the-rise-of-whatever/). The fact that stuff gets made because Something is better than Nothing. That seems to be the purpose and the reason for vibe coding. I have not found a better example that completely refutes the idea that vibe coding is "democratizing software" or whatever else people want to call it. Can anyone, without any particular set of skills, now produce? Yes! Why are they producing? Almost always: Because they can!
 
 So now the "moat" - the thing that was acting as a barrier or an obstacle - of writing code is gone. No longer do you need to understand how to write that function or how to produce that GUI with that library to have an app that does what you want. You don't need the massive time investment to think over design decisions, over writing thousands and tens of thousands of lines of code. You don't need to sit there banging your head when your character in your game floats through the wall. For everyone who *only* cared about the end result - which is (I hate this phrase) absolutely valid and completely fine - they can get there much more easily.
 
